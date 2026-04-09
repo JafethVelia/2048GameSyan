@@ -118,4 +118,169 @@
   (define vacio (tablero-vacio filas columnas))
   (insertar-dos-2s-aleatorio vacio))
 
+;; ============================================
+;; MOVIMIENTOS - FILA IZQUIERDA
+;; ============================================
 
+;; eliminar-ceros: lista -> lista
+(define (eliminar-ceros fila)
+  (cond [(empty? fila) '()]
+        [(= (car fila) 0) (eliminar-ceros (cdr fila))]
+        [else (cons (car fila) (eliminar-ceros (cdr fila)))]))
+
+;; combinar-iguales: lista -> lista
+(define (combinar-iguales fila)
+  (cond [(empty? fila) '()]
+        [(empty? (cdr fila)) (cons (car fila) '())]
+        [(= (car fila) (cadr fila)) 
+         (cons (* 2 (car fila)) (combinar-iguales (cddr fila)))]
+        [else (cons (car fila) (combinar-iguales (cdr fila)))]))
+
+;; completar-con-ceros: lista número -> lista
+(define (completar-con-ceros fila n)
+  (if (>= (length fila) n)
+      fila
+      (completar-con-ceros (append fila '(0)) n)))
+
+;; mover-fila-izquierda: lista número -> lista
+(define (mover-fila-izquierda fila n)
+  (completar-con-ceros (combinar-iguales (eliminar-ceros fila)) n))
+
+;; mover-tablero-izquierda: tablero -> tablero
+(define (mover-tablero-izquierda tablero)
+  (define n (obtener-columnas tablero))
+  (define (mover-filas t)
+    (cond [(empty? t) '()]
+          [else (cons (mover-fila-izquierda (car t) n)
+                      (mover-filas (cdr t)))]))
+  (mover-filas tablero))
+
+;; ============================================
+;; MOVIMIENTOS - DERECHA
+;; ============================================
+
+;; invertir-fila: lista -> lista
+(define (invertir-fila fila)
+  (cond [(empty? fila) '()]
+        [else (append (invertir-fila (cdr fila)) (list (car fila)))]))
+
+;; mover-fila-derecha: lista número -> lista
+(define (mover-fila-derecha fila n)
+  (invertir-fila (mover-fila-izquierda (invertir-fila fila) n)))
+
+;; mover-tablero-derecha: tablero -> tablero
+(define (mover-tablero-derecha tablero)
+  (define n (obtener-columnas tablero))
+  (define (mover-filas t)
+    (cond [(empty? t) '()]
+          [else (cons (mover-fila-derecha (car t) n)
+                      (mover-filas (cdr t)))]))
+  (mover-filas tablero))
+
+;; ============================================
+;; MOVIMIENTOS - ARRIBA Y ABAJO (TRANSPONER)
+;; ============================================
+
+;; obtener-columna: tablero número -> lista
+(define (obtener-columna tablero n)
+  (cond [(empty? tablero) '()]
+        [else (cons (obtener-valor tablero 0 n)
+                    (obtener-columna (cdr tablero) n))]))
+
+;; eliminar-primera-columna: tablero -> tablero
+(define (eliminar-primera-columna tablero)
+  (cond [(empty? tablero) '()]
+        [else (cons (cdr (car tablero))
+                    (eliminar-primera-columna (cdr tablero)))]))
+
+;; transponer: tablero -> tablero
+(define (transponer tablero)
+  (cond [(empty? (car tablero)) '()]
+        [else (cons (obtener-columna tablero 0)
+                    (transponer (eliminar-primera-columna tablero)))]))
+
+;; mover-tablero-arriba: tablero -> tablero
+(define (mover-tablero-arriba tablero)
+  (transponer (mover-tablero-izquierda (transponer tablero))))
+
+;; mover-tablero-abajo: tablero -> tablero
+(define (mover-tablero-abajo tablero)
+  (transponer (mover-tablero-derecha (transponer tablero))))
+
+
+;; ============================================
+;; DETECCIÓN DE VICTORIA Y DERROTA
+;; ============================================
+
+;; contiene-2048: tablero -> booleano
+;; Devuelve #t si alguna casilla tiene el valor 2048, #f en caso contrario
+(define (contiene-2048 tablero)
+  (cond [(empty? tablero) #f]
+        [(contiene-2048-en-fila (car tablero)) #t]
+        [else (contiene-2048 (cdr tablero))]))
+
+;; contiene-2048-en-fila: lista -> booleano
+;; Devuelve #t si la fila contiene un 2048
+(define (contiene-2048-en-fila fila)
+  (cond [(empty? fila) #f]
+        [(= (car fila) 2048) #t]
+        [else (contiene-2048-en-fila (cdr fila))]))
+
+;; tablero-lleno?: tablero -> booleano
+;; Devuelve #t si no hay casillas vacías (ceros)
+(define (tablero-lleno? tablero)
+  (cond [(empty? tablero) #t]
+        [(fila-llena? (car tablero)) (tablero-lleno? (cdr tablero))]
+        [else #f]))
+
+;; fila-llena?: lista -> booleano
+;; Devuelve #t si la fila no tiene ceros
+(define (fila-llena? fila)
+  (cond [(empty? fila) #t]
+        [(= (car fila) 0) #f]
+        [else (fila-llena? (cdr fila))]))
+
+;; hay-movimiento-posible?: tablero -> booleano
+;; Devuelve #t si se puede hacer al menos un movimiento
+(define (hay-movimiento-posible? tablero)
+  (or (movimiento-izquierda-cambia? tablero)
+      (movimiento-derecha-cambia? tablero)
+      (movimiento-arriba-cambia? tablero)
+      (movimiento-abajo-cambia? tablero)))
+
+;; movimiento-izquierda-cambia?: tablero -> booleano
+(define (movimiento-izquierda-cambia? tablero)
+  (not (equal? tablero (mover-tablero-izquierda tablero))))
+
+;; movimiento-derecha-cambia?: tablero -> booleano
+(define (movimiento-derecha-cambia? tablero)
+  (not (equal? tablero (mover-tablero-derecha tablero))))
+
+;; movimiento-arriba-cambia?: tablero -> booleano
+(define (movimiento-arriba-cambia? tablero)
+  (not (equal? tablero (mover-tablero-arriba tablero))))
+
+;; movimiento-abajo-cambia?: tablero -> booleano
+(define (movimiento-abajo-cambia? tablero)
+  (not (equal? tablero (mover-tablero-abajo tablero))))
+
+;; juego-terminado?: tablero -> booleano
+;; Devuelve #t si el juego terminó (sin movimientos posibles)
+(define (juego-terminado? tablero)
+  (not (hay-movimiento-posible? tablero)))
+
+;; ============================================
+;; CONTAR DOS's
+;; ============================================
+
+;; contar-dos-en-fila: lista -> número
+(define (contar-dos-en-fila fila)
+  (cond [(empty? fila) 0]
+        [(= (car fila) 2) (+ 1 (contar-dos-en-fila (cdr fila)))]
+        [else (contar-dos-en-fila (cdr fila))]))
+
+;; contar-dos: tablero -> número
+(define (contar-dos tablero)
+  (cond [(empty? tablero) 0]
+        [else (+ (contar-dos-en-fila (car tablero))
+                 (contar-dos (cdr tablero)))]))
