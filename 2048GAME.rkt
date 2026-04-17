@@ -1,6 +1,4 @@
 #lang racket
-(require 2htdp/image)
-(require 2htdp/universe)
 
 ;; ============================================
 ;; CE2048 - Juego 2048 en Racket
@@ -284,3 +282,24 @@
   (cond [(empty? tablero) 0]
         [else (+ (contar-dos-en-fila (car tablero))
                  (contar-dos (cdr tablero)))]))
+
+;; ============================================
+;; PUNTAJE
+;; ============================================
+
+;; sumar-diferencias-fila: lista lista -> número
+(define (sumar-diferencias-fila f1 f2)
+  (cond [(empty? f1) 0]
+        [else (+ (max 0 (- (car f2) (car f1)))
+                 (sumar-diferencias-fila (cdr f1) (cdr f2)))]))
+
+;; sumar-diferencias: tablero tablero -> número
+(define (sumar-diferencias t1 t2)
+  (cond [(empty? t1) 0]
+        [else (+ (sumar-diferencias-fila (car t1) (car t2))
+                 (sumar-diferencias (cdr t1) (cdr t2)))]))
+
+;; calcular-puntaje-ganado: tablero tablero -> número
+(define (calcular-puntaje-ganado antes despues)
+  (sumar-diferencias antes despues))
+(provide (all-defined-out))
