@@ -136,7 +136,7 @@
 
 ;; completar-con-ceros: lista número -> lista
 (define (completar-con-ceros fila n)
-  (if (>= (longitud-lista fila) n)
+  (if (>= (length fila) n)
       fila
       (completar-con-ceros (append fila '(0)) n)))
 
