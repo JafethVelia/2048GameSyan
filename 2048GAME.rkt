@@ -267,21 +267,7 @@
 (define (juego-terminado? tablero)
   (not (hay-movimiento-posible? tablero)))
 
-;; ============================================
-;; CONTAR DOS's
-;; ============================================
 
-;; contar-dos-en-fila: lista -> número
-(define (contar-dos-en-fila fila)
-  (cond [(empty? fila) 0]
-        [(= (car fila) 2) (+ 1 (contar-dos-en-fila (cdr fila)))]
-        [else (contar-dos-en-fila (cdr fila))]))
-
-;; contar-dos: tablero -> número
-(define (contar-dos tablero)
-  (cond [(empty? tablero) 0]
-        [else (+ (contar-dos-en-fila (car tablero))
-                 (contar-dos (cdr tablero)))]))
 
 ;; ============================================
 ;; PUNTAJE
